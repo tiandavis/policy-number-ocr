@@ -9,7 +9,7 @@ Git clone the project and install the dependencies.
 ```
 git clone https://github.com/tiandavis/kin-policy-number-challenge.git
 cd kin-policy-number-challenge
-bundle update --all && bundle install
+bundle install
 ```
 
 ## How To Run Project CLI
@@ -17,7 +17,6 @@ bundle update --all && bundle install
 From the project directory, run the project CLI.
 
 ```
-cd kin-policy-number-challenge
 ./bin/process_policy_numbers
 ```
 
@@ -26,6 +25,5 @@ cd kin-policy-number-challenge
 From the project directory, run RSpec and validate 27 passing specs.
 
 ```
-cd kin-policy-number-challenge
 bundle exec rspec
 ```
