@@ -9,10 +9,10 @@ output_file = ARGV[1] || 'spec/fixtures/policy_numbers_out.txt'
 begin
   puts "Processing policy numbers from #{input_file} to #{output_file}..."
 
-  # Parse policy entries from input file
+  # Parse policy entries from input file using the file parser service
   entries = PolicyOcr.parse_file(input_file)
 
-  # Write formatted output to output file
+  # Write formatted output to output file using the file writer service
   PolicyOcr.write_output_file(entries, output_file)
 
   puts "Done! Processed #{entries.size} policy entries."

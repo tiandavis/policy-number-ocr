@@ -127,8 +127,8 @@ describe PolicyOcr do
         end
 
         it 'raises InvalidInputError for other parsing errors' do
-          # Simulate an error in parse method by passing nil
-          allow_any_instance_of(PolicyOcr::PolicyEntry).to receive(:parse).and_raise(NoMethodError)
+          # Simulate an error during form processing
+          allow_any_instance_of(PolicyOcr::Forms::OcrInputForm).to receive(:to_policy_number).and_raise(NoMethodError)
           expect {
             PolicyOcr::PolicyEntry.new(["123", "123", "123"])
           }.to raise_error(PolicyOcr::InvalidInputError, /Failed to parse policy entry/)
