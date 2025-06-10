@@ -13,7 +13,15 @@
 # it.
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
+
+require 'policy_ocr'
+require 'fileutils'
+require_relative 'helpers/fixture_helper'
+
 RSpec.configure do |config|
+  # Include fixture helper in all tests
+  config.include FixtureHelper
+  
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
@@ -97,8 +105,4 @@ RSpec.configure do |config|
   # as the one that triggered the failure.
   Kernel.srand config.seed
 =end
-end
-
-def fixture(name)
-  File.read(File.join(File.dirname(__FILE__), "../spec/fixtures", "#{name}.txt"))
 end

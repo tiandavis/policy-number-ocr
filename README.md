@@ -22,7 +22,7 @@ From the project directory, run the project CLI.
 
 ## How To Run Project Tests
 
-From the project directory, run RSpec and validate 27 passing specs.
+From the project directory, run RSpec and validate passing specs.
 
 ```
 bundle exec rspec
