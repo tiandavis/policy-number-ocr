@@ -36,6 +36,61 @@ describe PolicyOcr do
       expect(entries[10].to_s).to eq('123456789')
     end
   end
+
+  describe '.write_output_file' do
+    it 'writes policy entries to output file' do
+      # Prepare test data
+      entries = [
+        instance_double(PolicyOcr::PolicyEntry, to_output_line: '123456789'),
+        instance_double(PolicyOcr::PolicyEntry, to_output_line: '111111111 ERR'),
+        instance_double(PolicyOcr::PolicyEntry, to_output_line: '1234?6789 ILL')
+      ]
+
+      output_path = fixture_path('test_output')
+
+      # Write to output file
+      PolicyOcr.write_output_file(entries, output_path)
+
+      # Verify the file was created
+      expect(File.exist?(output_path)).to be true
+
+      # Read the output file
+      content = File.read(output_path)
+
+      # Verify the content of the output file
+      expect(content).to eq("123456789\n111111111 ERR\n1234?6789 ILL\n")
+
+      # Clean up
+      File.delete(output_path)
+    end
+
+    it 'processes policy_numbers_in.txt and writes to policy_numbers_out.txt' do
+      input_path = fixture_path('policy_numbers_in')
+      output_path = fixture_path('policy_numbers_out')
+
+      # Parse the input file
+      entries = PolicyOcr.parse_file(input_path)
+
+      # Write to output file
+      PolicyOcr.write_output_file(entries, output_path)
+
+      # Verify file was created
+      expect(File.exist?(output_path)).to be true
+
+      # Read the output file
+      output_lines = File.readlines(output_path, chomp: true)
+
+      # Verify expected number of entries
+      expect(output_lines.size).to eq(3)
+
+      # Verify the content of the output file
+      expect(output_lines).to eq([
+        '457508000',
+        '664371495 ERR',
+        '86110??36 ILL'
+      ])
+    end
+  end
 end
 
 describe PolicyOcr::PolicyEntry do
@@ -173,6 +228,7 @@ describe PolicyOcr::PolicyEntry do
         " _||_||_ |_||_| _||_||_ |_ ",
         " _|  | _||_||_||_ |_||_| _|"
       ]
+
       entry = PolicyOcr::PolicyEntry.new(lines)
       expect(entry.to_s).to eq('345882865')
       expect(entry.valid_checksum?).to be true
@@ -223,6 +279,52 @@ describe PolicyOcr::PolicyEntry do
       entry = PolicyOcr::PolicyEntry.new(lines)
       expect(entry.to_s).to eq('123456789')
       expect(entry.valid_checksum?).to be true
+    end
+  end
+
+  context 'output formatting' do
+    it 'formats valid policy numbers with no status' do
+      lines = [
+        "    _  _     _  _  _  _  _ ",
+        "  | _| _||_||_ |_   ||_||_|",
+        "  ||_  _|  | _||_|  ||_| _|"
+      ]
+      entry = PolicyOcr::PolicyEntry.new(lines)
+      expect(entry.to_output_line).to eq('123456789')
+    end
+
+    it 'appends ERR to policy numbers with invalid checksum' do
+      lines = [
+        "                           ",
+        "  |  |  |  |  |  |  |  |  |",
+        "  |  |  |  |  |  |  |  |  |"
+      ]
+      entry = PolicyOcr::PolicyEntry.new(lines)
+      expect(entry.to_output_line).to eq('111111111 ERR')
+    end
+
+    it 'appends ILL to policy numbers with illegible digits' do
+      lines = [
+        " _  _  _  _  _  _  _  _    ",
+        "| || || || || || || || |  |",
+        "|_||_||_||_||_||_||_||_|   "
+      ]
+      entry = PolicyOcr::PolicyEntry.new(lines)
+      expect(entry.to_output_line).to eq('00000000? ILL')
+    end
+
+    it 'prioritizes ILL over ERR when both conditions are present' do
+      # Create a policy number with an illegible digit
+      # Even if the checksum would be invalid, ILL takes precedence
+      lines = [
+        " _  _        _     _  _    ",
+        "|_ |_   |  || |  ||_   |  |",
+        "|_||_|  |  ||_|  ||_|  |   "
+      ]
+      entry = PolicyOcr::PolicyEntry.new(lines)
+      expect(entry.to_s).to include('?')
+      expect(entry.valid_checksum?).to be false
+      expect(entry.to_output_line).to end_with(' ILL')
     end
   end
 end

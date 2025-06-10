@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/policy_ocr'
+
+# Default file paths
+input_file = ARGV[0] || 'spec/fixtures/policy_numbers_in.txt'
+output_file = ARGV[1] || 'spec/fixtures/policy_numbers_out.txt'
+
+puts "Processing policy numbers from #{input_file} to #{output_file}..."
+
+# Parse policy entries from input file
+entries = PolicyOcr.parse_file(input_file)
+
+# Write formatted output to output file
+PolicyOcr.write_output_file(entries, output_file)
+
+puts "Done! Processed #{entries.size} policy entries."

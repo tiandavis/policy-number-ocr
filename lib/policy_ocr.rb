@@ -1,4 +1,4 @@
-require 'digit_patterns'
+require_relative 'digit_patterns'
 
 module PolicyOcr
   class PolicyEntry
@@ -31,6 +31,23 @@ module PolicyOcr
       end
 
       sum % 11 == 0
+    end
+
+    # Format policy number with status for output
+    # Append 'ILL' if any digit is illegible (?)
+    # Append 'ERR' if checksum is invalid
+    # Examples:
+    # 457508000
+    # 664371495 ERR
+    # 86110??36 ILL
+    def to_output_line
+      if @policy_number.include?('?')
+        "#{@policy_number} ILL"
+      elsif !valid_checksum?
+        "#{@policy_number} ERR"
+      else
+        @policy_number
+      end
     end
 
     private
@@ -78,5 +95,15 @@ module PolicyOcr
     end
 
     entries
+  end
+
+  # Write policy entries to output file
+  # Each entry is formatted according to PolicyEntry#to_output_line
+  def self.write_output_file(entries, output_file_path)
+    File.open(output_file_path, 'w') do |file|
+      entries.each do |entry|
+        file.puts entry.to_output_line
+      end
+    end
   end
 end
