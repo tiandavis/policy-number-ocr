@@ -6,12 +6,30 @@ require_relative '../lib/policy_ocr'
 input_file = ARGV[0] || 'spec/fixtures/policy_numbers_in.txt'
 output_file = ARGV[1] || 'spec/fixtures/policy_numbers_out.txt'
 
-puts "Processing policy numbers from #{input_file} to #{output_file}..."
+begin
+  puts "Processing policy numbers from #{input_file} to #{output_file}..."
 
-# Parse policy entries from input file
-entries = PolicyOcr.parse_file(input_file)
+  # Parse policy entries from input file
+  entries = PolicyOcr.parse_file(input_file)
 
-# Write formatted output to output file
-PolicyOcr.write_output_file(entries, output_file)
+  # Write formatted output to output file
+  PolicyOcr.write_output_file(entries, output_file)
 
-puts "Done! Processed #{entries.size} policy entries."
+  puts "Done! Processed #{entries.size} policy entries."
+rescue PolicyOcr::FileOperationError => e
+  $stderr.puts "Error: #{e.message}"
+  exit 1
+rescue PolicyOcr::InvalidInputError => e
+  $stderr.puts "Error: Invalid input - #{e.message}"
+  exit 1
+rescue PolicyOcr::MalformedOcrError => e
+  $stderr.puts "Error: Malformed OCR input - #{e.message}"
+  exit 1
+rescue PolicyOcr::PolicyOcrError => e
+  $stderr.puts "Error: #{e.message}"
+  exit 1
+rescue StandardError => e
+  $stderr.puts "Unexpected error: #{e.message}"
+  $stderr.puts e.backtrace
+  exit 1
+end

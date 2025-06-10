@@ -1,11 +1,18 @@
 require_relative 'digit_patterns'
+require_relative 'policy_ocr_errors'
 
 module PolicyOcr
   class PolicyEntry
     attr_reader :policy_number
 
     def initialize(lines)
-      @policy_number = parse(lines)
+      begin
+        @policy_number = parse(lines)
+      rescue MalformedOcrError => e
+        raise e
+      rescue StandardError => e
+        raise InvalidInputError, "Failed to parse policy entry: #{e.message}"
+      end
     end
 
     def to_s
@@ -53,6 +60,8 @@ module PolicyOcr
     private
 
     def parse(lines)
+      PolicyOcr.validate_input_lines(lines)
+
       # Calculate number of digits based on width
       line_width = lines.first.length
       num_digits = (line_width / 3.0).ceil
@@ -83,15 +92,42 @@ module PolicyOcr
     end
   end
 
+  def self.validate_input_lines(lines)
+    unless lines.is_a?(Array) && lines.length == 3
+      raise MalformedOcrError, "Input must be an array of 3 lines"
+    end
+
+    unless lines.all? { |line| line.is_a?(String) }
+      raise MalformedOcrError, "All lines must be strings"
+    end
+
+    unless lines.map(&:length).uniq.length == 1
+      raise MalformedOcrError, "All lines must have the same length"
+    end
+
+    unless lines.first.length % 3 == 0
+      raise MalformedOcrError, "Line length must be a multiple of 3"
+    end
+  end
+
   def self.parse_file(file_path)
     entries = []
-    lines = File.readlines(file_path, chomp: true)
+    begin
+      lines = File.readlines(file_path, chomp: true)
+    rescue SystemCallError => e
+      raise FileOperationError, "Failed to read file '#{file_path}': #{e.message}"
+    end
 
     # Process groups of 4 lines (3 for the OCR, 1 blank)
-    lines.each_slice(4) do |line_group|
+    lines.each_slice(4).with_index do |line_group, index|
       # Skip empty groups
       next if line_group.all?(&:empty?)
-      entries << PolicyEntry.new(line_group[0..2])
+
+      begin
+        entries << PolicyEntry.new(line_group[0..2])
+      rescue PolicyOcrError => e
+        raise MalformedOcrError, "Error in entry #{index + 1}: #{e.message}"
+      end
     end
 
     entries
@@ -100,10 +136,14 @@ module PolicyOcr
   # Write policy entries to output file
   # Each entry is formatted according to PolicyEntry#to_output_line
   def self.write_output_file(entries, output_file_path)
-    File.open(output_file_path, 'w') do |file|
-      entries.each do |entry|
-        file.puts entry.to_output_line
+    begin
+      File.open(output_file_path, 'w') do |file|
+        entries.each do |entry|
+          file.puts entry.to_output_line
+        end
       end
+    rescue SystemCallError => e
+      raise FileOperationError, "Failed to write to file '#{output_file_path}': #{e.message}"
     end
   end
 end
