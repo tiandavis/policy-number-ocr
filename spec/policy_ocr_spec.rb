@@ -153,5 +153,15 @@ describe PolicyOcr::PolicyEntry do
       entry = PolicyOcr::PolicyEntry.new(lines)
       expect(entry.to_s).to eq('?')
     end
+
+    it 'marks illegible digits with question marks in policy numbers' do
+      lines = [
+        " _  _  _ ",
+        "|_||  | |",
+        "|_||  |_|"
+      ]
+      entry = PolicyOcr::PolicyEntry.new(lines)
+      expect(entry.to_s).to eq('8?0')
+    end
   end
 end
