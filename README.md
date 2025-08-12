@@ -7,8 +7,8 @@ This project requires Ruby 3.4.4
 Git clone the project and install the dependencies.
 
 ```
-git clone https://github.com/tiandavis/insurance-policy-number-ocr.git
-cd insurance-policy-number-ocr
+git clone https://github.com/tiandavis/policy-number-ocr.git
+cd policy-number-ocr
 bundle install
 ```
 
